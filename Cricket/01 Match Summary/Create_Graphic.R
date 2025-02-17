@@ -1,5 +1,5 @@
 ## Package names
-packages <- c("dplyr", "readxl", "purrr", "sjmisc", "plyr", "magick", "httr", "jsonlite", "kableExtra", "webshot", "ggplot2",
+packages <- c("dplyr", "readxl", "purrr", "sjmisc", "magick", "httr", "jsonlite", "kableExtra", "webshot", "ggplot2",
               "stringr", "cricketdata", "lubridate")
 
 ## Install packages not yet installed
@@ -31,7 +31,7 @@ innings_2_logo <- image_read(
 #############################################################
 
 # Create canvas
-final_image <- image_blank(width = 1500, height = 1500, color = "#03a9f5")
+final_image <- image_blank(width = 1500, height = 1500, color = "#1f4357")
 
 # Add Competition Logo
 final_image <- image_composite(final_image, comp_logo, gravity = "north", offset = "+0+20")
@@ -60,5 +60,19 @@ final_image <- image_annotate(final_image, innings_2_over, gravity = "north", we
 # Add Team Logo
 final_image <- image_composite(final_image, innings_1_logo, gravity = "north", offset = "-375+290")
 final_image <- image_composite(final_image, innings_2_logo, gravity = "north", offset = "+375+290")
+
+
+# Add Manhattan
+final_image <- image_annotate(final_image, "Manhattan", gravity = "north", weight = 200, size = 20, 
+                              color = "#FFFFFF", location = "-350+1075")
+final_image <- image_composite(final_image, gg_image_manhattan, gravity = "west", offset = "+0+550")
+
+
+# Scoring Worm
+final_image <- image_annotate(final_image, "Scoring Worm", gravity = "north", weight = 200, size = 20, 
+                              color = "#FFFFFF", location = "+350+1075")
+final_image <- image_composite(final_image, gg_image_scoring_worm, gravity = "east", offset = "+0+550")
+
+
 
 final_image

@@ -1,5 +1,5 @@
 ## Package names
-packages <- c("dplyr", "readxl", "purrr", "sjmisc", "plyr", "magick", "httr", "jsonlite", "kableExtra", "webshot", "ggplot2",
+packages <- c("dplyr", "readxl", "purrr", "sjmisc", "magick", "httr", "jsonlite", "kableExtra", "webshot", "ggplot2",
               "stringr", "cricketdata", "lubridate")
 
 ## Install packages not yet installed
@@ -10,6 +10,30 @@ if (any(installed_packages == FALSE)) {
 
 ## Packages loading
 invisible(lapply(packages, library, character.only = TRUE))
+
+
+#############################################################
+image_file_location <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Comps/"
+
+comp_logo <- image_read(
+  paste0(image_file_location, "Champions_Trophy_2025.png")) %>%
+  image_resize("200x200")
+
+team_logo_file_locations <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Intl/"
+
+innings_1_logo <- image_read(
+  paste0(team_logo_file_locations, "India.png")) %>%
+  image_resize("150x150")
+
+innings_2_logo <- image_read(
+  paste0(team_logo_file_locations, "South_Africa.png")) %>%
+  image_resize("150x150")
+
+innings_1_colour <- "#245588"
+innings_2_colour <- "#f4ba0a"
+
+#############################################################
+
 
 # 1. Get the match high-level information
 match <- fetch_cricsheet(type = "match", gender = "male", competition = "bbl")
@@ -67,4 +91,49 @@ innings_1_over <- paste0(innings_1$Overs, " (RR: ", round(innings_1$RunRate, 2),
 innings_2_over <- paste0(innings_2$Overs, " (RR: ", round(innings_2$RunRate, 2), ")")
 
 
+# Out. 3 - Create Worm Graph
+scoring_worm <- bbb %>%
+  group_by(batting_team, ball) %>%
+  summarise(
+    Runs = cumsum(
+    sum(runs_off_bat, na.rm = TRUE) + 
+      sum(wides, na.rm = TRUE) + 
+      sum(noballs, na.rm = TRUE) + 
+      sum(byes, na.rm = TRUE) + 
+      sum(legbyes, na.rm = TRUE) + 
+      sum(penalty, na.rm = TRUE)
+  ),
+  Wickets = sum(wicket_type != "" & !is.na(wicket_type))) %>%
+  rename("Team" = batting_team, "Ball" = ball) %>%
+  ggplot(aes(x = Ball, y = cumsum(Runs), colour = Team)) + geom_line()
 
+
+# Out. 4 - Manhattan
+manhattan <- bbb %>%
+  mutate(Over = floor(ball) + 1) %>%
+  group_by(innings, Over) %>%
+  summarise(Runs = sum(runs_off_bat, na.rm = TRUE) + 
+              sum(wides, na.rm = TRUE) + 
+              sum(noballs, na.rm = TRUE) + 
+              sum(byes, na.rm = TRUE) + 
+              sum(legbyes, na.rm = TRUE) + 
+              sum(penalty, na.rm = TRUE),
+            .groups = "drop") %>%
+  ggplot(aes(x = Over, y = Runs, group = as.factor(innings), fill = as.factor(innings))) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("1" = innings_1_colour, "2" = innings_2_colour)) +
+  labs(x = "Over", y = "Runs") +
+  theme_minimal() +
+  theme(
+    panel.background = element_rect(fill = "#1f4357", color = NA),  # Removes panel background
+    plot.background = element_rect(fill = "#1f4357", color = NA),   # Removes plot background
+    panel.grid = element_blank(),
+    axis.title = element_text(color = "white"),  # Makes axis titles white
+    axis.text = element_text(color = "white"),   # Makes axis numbers white
+    legend.position = "none"  # Removes legend
+  )
+
+gg_grob_manhattan <- ggplotGrob(manhattan)
+gg_image_manhattan <- image_graph(width = 730, height = 400, res = 98)
+grid::grid.draw(gg_grob_manhattan)
+dev.off()
