@@ -11,24 +11,6 @@ if (any(installed_packages == FALSE)) {
 ## Packages loading
 invisible(lapply(packages, library, character.only = TRUE))
 
-#############################################################
-image_file_location <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Comps/"
-
-comp_logo <- image_read(
-  paste0(image_file_location, "Champions_Trophy_2025.png")) %>%
-  image_resize("200x200")
-
-team_logo_file_locations <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Intl/"
-
-innings_1_logo <- image_read(
-  paste0(team_logo_file_locations, "India.png")) %>%
-  image_resize("150x150")
-
-innings_2_logo <- image_read(
-  paste0(team_logo_file_locations, "South_Africa.png")) %>%
-  image_resize("150x150")
-
-#############################################################
 
 # Create canvas
 final_image <- image_blank(width = 1500, height = 1500, color = "#1f4357")
@@ -43,6 +25,8 @@ final_image <- image_annotate(final_image, match_info_demo, gravity = "north", w
                               color = "#FFFFFF", location = "+0+150")
 final_image <- image_annotate(final_image, match_info_umpires, gravity = "north", weight = 100, size = 25, 
                               color = "#FFFFFF", location = "+0+185")
+final_image <- image_annotate(final_image, match_info_potm, gravity = "north", weight = 100, size = 25, 
+                              color = "#FFFFFF", location = "+0+220")
 
 
 # Scores

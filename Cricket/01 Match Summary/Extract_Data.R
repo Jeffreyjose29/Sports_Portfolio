@@ -22,28 +22,29 @@ comp_logo <- image_read(
 team_logo_file_locations <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Intl/"
 
 innings_1_logo <- image_read(
-  paste0(team_logo_file_locations, "India.png")) %>%
-  image_resize("150x150")
-
-innings_2_logo <- image_read(
   paste0(team_logo_file_locations, "South_Africa.png")) %>%
   image_resize("150x150")
 
-innings_1_colour <- "#245588"
-innings_2_colour <- "#f4ba0a"
+innings_2_logo <- image_read(
+  paste0(team_logo_file_locations, "Pakistan.png")) %>%
+  image_resize("150x150")
+
+innings_1_colour <- "#f4ba0a"
+innings_2_colour <- "#a8821d"
 
 #############################################################
 
 
 # 1. Get the match high-level information
-match <- fetch_cricsheet(type = "match", gender = "male", competition = "bbl")
+match <- fetch_cricsheet(type = "match", gender = "male", competition = "odis") 
 match <- match %>%
-  filter(date == "2017/01/28")
+  mutate(match_id = sub(".*\\/", "", match_id)) %>%
+  filter(match_id == "1442222")
 
 
-bbb <- fetch_cricsheet(type = "bbb", gender = "male", competition = "bbl")
+bbb <- fetch_cricsheet(type = "bbb", gender = "male", competition = "odis")
 bbb <- bbb %>%
-  filter(match_id == "1023649")
+  filter(match_id == "1442222")
 
 # 2. Get the score
 innings_1 <- bbb %>%
@@ -82,6 +83,7 @@ innings_2 <- bbb %>%
 match_info_teams <- paste0(match$team1, " vs. ", match$team2)
 match_info_demo <- paste(match$event, "|", match$date, "|", paste0(match$venue, ","), match$city)
 match_info_umpires <- paste("Umpires:", paste0(match$umpire1, ", ", match$umpire2))
+match_info_potm <- paste("Player Of The Match:", match$player_of_match)
 
 
 # Out. 2 - Score and Overs (RR)
@@ -93,20 +95,46 @@ innings_2_over <- paste0(innings_2$Overs, " (RR: ", round(innings_2$RunRate, 2),
 
 # Out. 3 - Create Worm Graph
 scoring_worm <- bbb %>%
-  group_by(batting_team, ball) %>%
+  group_by(innings, ball) %>%
   summarise(
-    Runs = cumsum(
-    sum(runs_off_bat, na.rm = TRUE) + 
+    Runs = sum(runs_off_bat, na.rm = TRUE) + 
       sum(wides, na.rm = TRUE) + 
       sum(noballs, na.rm = TRUE) + 
       sum(byes, na.rm = TRUE) + 
       sum(legbyes, na.rm = TRUE) + 
-      sum(penalty, na.rm = TRUE)
-  ),
-  Wickets = sum(wicket_type != "" & !is.na(wicket_type))) %>%
-  rename("Team" = batting_team, "Ball" = ball) %>%
-  ggplot(aes(x = Ball, y = cumsum(Runs), colour = Team)) + geom_line()
+      sum(penalty, na.rm = TRUE),
+    Wickets = sum(wicket_type != "" & !is.na(wicket_type)), 
+    .groups = "drop"
+  ) %>%
+  rename("Team" = innings, "Ball" = ball) %>%
+  group_by(Team) %>%
+  mutate(cumsumRuns = cumsum(Runs)) %>%
+  ggplot(aes(x = Ball, y = cumsumRuns, group = as.factor(Team), colour = as.factor(Team))) + 
+  
+  # Line with increased thickness
+  geom_line(linewidth = 1.2) + 
+  
+  # Add points where wickets fell
+  geom_point(data = . %>% filter(Wickets > 0), aes(x = Ball, y = cumsumRuns), size = 4, shape = 21, fill = "white", stroke = 1.2) +
+  
+  scale_colour_manual(values = c("1" = innings_1_colour, "2" = innings_2_colour)) +
+  labs(x = "Over", y = "Runs") +
+  
+  theme_minimal() +
+  theme(
+    panel.background = element_rect(fill = "#1f4357", color = NA),
+    plot.background = element_rect(fill = "#1f4357", color = NA),
+    panel.grid = element_blank(),
+    axis.title = element_text(color = "white"),
+    axis.text = element_text(color = "white"),
+    legend.position = "none"
+  )
 
+
+gg_grob_scoring_worm <- ggplotGrob(scoring_worm)
+gg_image_scoring_worm <- image_graph(width = 730, height = 400, res = 98)
+grid::grid.draw(gg_grob_scoring_worm)
+dev.off()
 
 # Out. 4 - Manhattan
 manhattan <- bbb %>%
@@ -137,3 +165,17 @@ gg_grob_manhattan <- ggplotGrob(manhattan)
 gg_image_manhattan <- image_graph(width = 730, height = 400, res = 98)
 grid::grid.draw(gg_grob_manhattan)
 dev.off()
+
+
+## Out. 3 - Score Cards
+top_scores <- bbb %>%
+  group_by(innings, striker) %>%
+  summarise(Runs = sum(runs_off_bat, na.rm = TRUE),
+            Balls = n(),  # Counts total rows (balls faced)
+            Byes = sum(!is.na(byes)),  # Counts non-NA rows in Byes
+            LegByes = sum(!is.na(legbyes)),
+            Wides = sum(!is.na(wides)),
+            `4s` = sum(runs_off_bat == 4, na.rm = TRUE),
+            `6s` = sum(runs_off_bat == 6, na.rm = TRUE)) %>%
+  mutate(`Balls Faced` = Balls - Wides) %>%
+  select(- c(Balls, Byes, LegByes, Wides)) 
