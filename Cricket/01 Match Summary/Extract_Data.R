@@ -22,29 +22,30 @@ comp_logo <- image_read(
 team_logo_file_locations <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Intl/"
 
 innings_1_logo <- image_read(
-  paste0(team_logo_file_locations, "South_Africa.png")) %>%
-  image_resize("150x150")
-
-innings_2_logo <- image_read(
   paste0(team_logo_file_locations, "Pakistan.png")) %>%
   image_resize("150x150")
 
-innings_1_colour <- "#f4ba0a"
-innings_2_colour <- "#a8821d"
+innings_2_logo <- image_read(
+  paste0(team_logo_file_locations, "India.png")) %>%
+  image_resize("150x150")
+
+innings_1_colour <- "#c1f887"
+innings_2_colour <- "#4686cf"
 
 #############################################################
 
+match_id_ <- "1466418"
 
 # 1. Get the match high-level information
 match <- fetch_cricsheet(type = "match", gender = "male", competition = "odis") 
 match <- match %>%
   mutate(match_id = sub(".*\\/", "", match_id)) %>%
-  filter(match_id == "1442222")
+  filter(match_id == match_id_)
 
 
 bbb <- fetch_cricsheet(type = "bbb", gender = "male", competition = "odis")
 bbb <- bbb %>%
-  filter(match_id == "1442222")
+  filter(match_id == match_id_)
 
 # 2. Get the score
 innings_1 <- bbb %>%
@@ -178,4 +179,135 @@ top_scores <- bbb %>%
             `4s` = sum(runs_off_bat == 4, na.rm = TRUE),
             `6s` = sum(runs_off_bat == 6, na.rm = TRUE)) %>%
   mutate(`Balls Faced` = Balls - Wides) %>%
-  select(- c(Balls, Byes, LegByes, Wides)) 
+  select(- c(Balls, Byes, LegByes, Wides)) %>%
+  mutate(`SR` = round((Runs/`Balls Faced`)* 100, 2)) %>%
+  rename("Batting" = striker, "R" = Runs, "B" = `Balls Faced`)
+
+innings_1_scorecard <- top_scores %>%
+  filter(innings == 1) %>%
+  ungroup() %>% 
+  mutate(`% R` = round((`R` / innings_1$Runs)*100, 2)) %>%
+  select(-innings) %>%
+  select(`Batting`, `R`, `B`, `4s`, `6s`, `SR`, `% R`) %>%
+  arrange(desc(`R`))
+
+
+innings_2_scorecard <- top_scores %>%
+  filter(innings == 2) %>%
+  ungroup() %>%  
+  mutate(`% R` = round((`R` / innings_2$Runs) * 100, 2)) %>%
+  select(-innings) %>%
+  select(`Batting`, `R`, `B`, `4s`, `6s`, `SR`, `% R`) %>%
+  arrange(desc(`R`))
+
+
+# Kable Table Scorecards
+innings_1_card <- kable(innings_1_scorecard, escape = FALSE, format = "html", align = 'c', booktabs = TRUE) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    position = "center",
+    full_width = FALSE,
+    html_font = "Arial"
+  ) %>%
+  row_spec(0, background = innings_1_colour, extra_css = "border: none;", bold = TRUE, color = "#FFFFFF") %>%
+  row_spec(1:nrow(innings_1_scorecard), background = "#1f4357", color = "#FFFFFF", extra_css = "border: none;") %>%
+  column_spec(1, width = "9em", include_thead = TRUE) %>%
+  column_spec(2, width = "4em", include_thead = TRUE) %>%
+  column_spec(3, width = "4em", include_thead = TRUE) %>%
+  column_spec(4, width = "4em", include_thead = TRUE) %>%
+  column_spec(5, width = "4em", include_thead = TRUE) %>%
+  column_spec(6, width = "4em", include_thead = TRUE) %>%
+  column_spec(7, width = "4em", include_thead = TRUE) 
+
+
+# Save the table as an HTML file
+innings1_html <- "innings1_html.html"
+save_kable(innings_1_card, innings1_html)
+
+# Convert the HTML file to an image
+innings1_img_file <- "innings1_card.png"
+webshot(innings1_html, file = innings1_img_file, selector = "table", zoom = 1.0)
+
+# Read the image with magick
+innings1_img <- image_read(innings1_img_file)
+
+
+
+innings_2_card <- kable(innings_2_scorecard, escape = FALSE, format = "html", align = 'c', booktabs = TRUE) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    position = "center",
+    full_width = FALSE,
+    html_font = "Arial"
+  ) %>%
+  row_spec(0, background = innings_2_colour, extra_css = "border: none;", bold = TRUE, color = "#FFFFFF") %>%
+  row_spec(1:nrow(innings_2_scorecard), background = "#1f4357", color = "#FFFFFF", extra_css = "border: none;") %>%
+  column_spec(1, width = "9em", include_thead = TRUE) %>%
+  column_spec(2, width = "4em", include_thead = TRUE) %>%
+  column_spec(3, width = "4em", include_thead = TRUE) %>%
+  column_spec(4, width = "4em", include_thead = TRUE) %>%
+  column_spec(5, width = "4em", include_thead = TRUE) %>%
+  column_spec(6, width = "4em", include_thead = TRUE) %>%
+  column_spec(7, width = "4em", include_thead = TRUE) 
+
+
+innings2_html <- "innings2_html.html"
+save_kable(innings_2_card, innings2_html)
+
+# Convert the HTML file to an image
+innings2_img_file <- "innings2_card.png"
+webshot(innings2_html, file = innings2_img_file, selector = "table", zoom = 1.0)
+
+# Read the image with magick
+innings2_img <- image_read(innings2_img_file)
+
+
+
+# Out. 4. Run-Rate
+run_rate <- bbb %>%
+  mutate(Over = floor(ball) + 1) %>%
+  group_by(innings, Over) %>%
+  summarise(
+    `RUNS` = sum(runs_off_bat, na.rm = TRUE) + 
+      sum(wides, na.rm = TRUE) + 
+      sum(noballs, na.rm = TRUE) + 
+      sum(byes, na.rm = TRUE) + 
+      sum(legbyes, na.rm = TRUE) + 
+      sum(penalty, na.rm = TRUE),
+    Wickets = sum(wicket_type != "" & !is.na(wicket_type)), 
+    .groups = "drop"
+  ) %>%
+  rename("Team" = innings, "OVERS" = Over) %>%
+  group_by(Team) %>%
+  mutate(`TOTAL RUNS` = cumsum(`RUNS`),
+         `RUN RATE INNINGS` = `RUNS` / OVERS,
+         `RUN RATE` = `TOTAL RUNS` / OVERS ) %>%
+  ggplot(aes(x = OVERS, y = `RUN RATE`, group = as.factor(Team), colour = as.factor(Team))) + 
+  
+  # Line with increased thickness
+  geom_line(linewidth = 1.2) + 
+  
+  # Add points where wickets fell
+  geom_point(data = . %>% filter(Wickets > 0), aes(x = OVERS, y = `RUN RATE`), size = 4, shape = 21, fill = "white", stroke = 1.2) +
+  
+  scale_colour_manual(values = c("1" = innings_1_colour, "2" = innings_2_colour)) +
+  labs(x = "Overs", y = "Run Rate") +
+  
+  theme_minimal() +
+  theme_minimal() +
+  theme(
+    panel.background = element_rect(fill = "#1f4357", color = NA),
+    plot.background = element_rect(fill = "#1f4357", color = NA),
+    panel.grid.major.x = element_blank(),  # Remove major vertical gridlines
+    panel.grid.minor.x = element_blank(),  # Remove minor vertical gridlines
+    panel.grid.major.y = element_line(color = "white"),  # Keep horizontal gridlines
+    panel.grid.minor.y = element_blank(),  # Remove minor horizontal gridlines (optional)
+    axis.title = element_text(color = "white"),  # Bigger axis title with grey color
+    axis.text = element_text(color = "white"),  # Bigger axis text with grey color
+    legend.position = "none"
+  )
+
+gg_grob_runrate <- ggplotGrob(run_rate)
+gg_image_runrate <- image_graph(width = 730, height = 400, res = 98)
+grid::grid.draw(gg_grob_runrate)
+dev.off()
