@@ -1,6 +1,6 @@
 ## Package names
 packages <- c("dplyr", "readxl", "purrr", "sjmisc", "magick", "httr", "jsonlite", "kableExtra", "webshot", "ggplot2",
-              "stringr", "cricketdata", "lubridate")
+              "stringr", "cricketdata", "lubridate", "howzatR")
 
 ## Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())
@@ -123,8 +123,8 @@ scoring_worm <- bbb %>%
   
   theme_minimal() +
   theme(
-    panel.background = element_rect(fill = "#1f4357", color = NA),
-    plot.background = element_rect(fill = "#1f4357", color = NA),
+    panel.background = element_rect(fill = "#1b2326", color = NA),
+    plot.background = element_rect(fill = "#1b2326", color = NA),
     panel.grid = element_blank(),
     axis.title = element_text(color = "white"),
     axis.text = element_text(color = "white"),
@@ -154,8 +154,8 @@ manhattan <- bbb %>%
   labs(x = "Over", y = "Runs") +
   theme_minimal() +
   theme(
-    panel.background = element_rect(fill = "#1f4357", color = NA),  # Removes panel background
-    plot.background = element_rect(fill = "#1f4357", color = NA),   # Removes plot background
+    panel.background = element_rect(fill = "#1b2326", color = NA),  # Removes panel background
+    plot.background = element_rect(fill = "#1b2326", color = NA),   # Removes plot background
     panel.grid = element_blank(),
     axis.title = element_text(color = "white"),  # Makes axis titles white
     axis.text = element_text(color = "white"),   # Makes axis numbers white
@@ -210,7 +210,7 @@ innings_1_card <- kable(innings_1_scorecard, escape = FALSE, format = "html", al
     html_font = "Arial"
   ) %>%
   row_spec(0, background = innings_1_colour, extra_css = "border: none;", bold = TRUE, color = "#FFFFFF") %>%
-  row_spec(1:nrow(innings_1_scorecard), background = "#1f4357", color = "#FFFFFF", extra_css = "border: none;") %>%
+  row_spec(1:nrow(innings_1_scorecard), background = "#1b2326", color = "#FFFFFF", extra_css = "border: none;") %>%
   column_spec(1, width = "9em", include_thead = TRUE) %>%
   column_spec(2, width = "4em", include_thead = TRUE) %>%
   column_spec(3, width = "4em", include_thead = TRUE) %>%
@@ -241,7 +241,7 @@ innings_2_card <- kable(innings_2_scorecard, escape = FALSE, format = "html", al
     html_font = "Arial"
   ) %>%
   row_spec(0, background = innings_2_colour, extra_css = "border: none;", bold = TRUE, color = "#FFFFFF") %>%
-  row_spec(1:nrow(innings_2_scorecard), background = "#1f4357", color = "#FFFFFF", extra_css = "border: none;") %>%
+  row_spec(1:nrow(innings_2_scorecard), background = "#1b2326", color = "#FFFFFF", extra_css = "border: none;") %>%
   column_spec(1, width = "9em", include_thead = TRUE) %>%
   column_spec(2, width = "4em", include_thead = TRUE) %>%
   column_spec(3, width = "4em", include_thead = TRUE) %>%
@@ -260,6 +260,93 @@ webshot(innings2_html, file = innings2_img_file, selector = "table", zoom = 1.0)
 
 # Read the image with magick
 innings2_img <- image_read(innings2_img_file)
+
+
+### Bowling Card Innings 1
+bowling_scorecard <- bbb %>%
+  group_by(innings, bowler) %>%
+  summarise(RunsConceded = sum(runs_off_bat, na.rm = TRUE),
+            Balls = n(),  # Counts total rows (balls faced)
+            Byes = sum(!is.na(byes)),  # Counts non-NA rows in Byes
+            LegByes = sum(!is.na(legbyes)),
+            Wides = sum(!is.na(wides)),
+            `W` = sum(!is.na(wicket_type) & !(wicket_type %in% c('run out', '')))) %>%
+  mutate(`R` = RunsConceded + Wides,
+         `O` = balls_to_overs(Balls-Wides),
+         `Econ` = round(`R` / `O`, 2)) %>%
+  select(- c(RunsConceded, Balls, Byes, LegByes, Wides)) %>%
+  rename("Bowling" = bowler) %>%
+  select(`Bowling`, `O`, `R`, `W`, `Econ`) %>%
+  arrange(desc(`W`))
+
+
+bowling_innings_1 <- bowling_scorecard %>%
+  filter(innings == 1) %>%
+  ungroup() %>%
+  select(-c(innings))
+
+
+bowling_innings_1_card <- kable(bowling_innings_1, escape = FALSE, format = "html", align = 'c', booktabs = TRUE) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    position = "center",
+    full_width = FALSE,
+    html_font = "Arial"
+  ) %>%
+  row_spec(0, background = innings_2_colour, extra_css = "border: none;", bold = TRUE, color = "#FFFFFF") %>%
+  row_spec(1:nrow(bowling_innings_1), background = "#1b2326", color = "#FFFFFF", extra_css = "border: none;") %>%
+  column_spec(1, width = "9em", include_thead = TRUE) %>%
+  column_spec(2, width = "4em", include_thead = TRUE) %>%
+  column_spec(3, width = "4em", include_thead = TRUE) %>%
+  column_spec(4, width = "4em", include_thead = TRUE) %>%
+  column_spec(5, width = "4em", include_thead = TRUE) 
+
+
+# Save the table as an HTML file
+innings1_html <- "innings1_html.html"
+save_kable(bowling_innings_1_card, innings1_html)
+
+# Convert the HTML file to an image
+innings1_img_file <- "innings1_card.png"
+webshot(innings1_html, file = innings1_img_file, selector = "table", zoom = 1.0)
+
+# Read the image with magick
+bowling_innings1_img <- image_read(innings1_img_file)
+
+
+
+
+bowling_innings_2 <- bowling_scorecard %>%
+  filter(innings == 2) %>%
+  ungroup() %>%
+  select(-c(innings))
+
+
+bowling_innings_2_card <- kable(bowling_innings_2, escape = FALSE, format = "html", align = 'c', booktabs = TRUE) %>%
+  kable_styling(
+    bootstrap_options = c("striped", "condensed"),
+    position = "center",
+    full_width = FALSE,
+    html_font = "Arial"
+  ) %>%
+  row_spec(0, background = innings_1_colour, extra_css = "border: none;", bold = TRUE, color = "#FFFFFF") %>%
+  row_spec(1:nrow(bowling_innings_2), background = "#1b2326", color = "#FFFFFF", extra_css = "border: none;") %>%
+  column_spec(1, width = "9em", include_thead = TRUE) %>%
+  column_spec(2, width = "4em", include_thead = TRUE) %>%
+  column_spec(3, width = "4em", include_thead = TRUE) %>%
+  column_spec(4, width = "4em", include_thead = TRUE) %>%
+  column_spec(5, width = "4em", include_thead = TRUE) 
+
+
+innings2_html <- "innings2_html.html"
+save_kable(bowling_innings_2_card, innings2_html)
+
+# Convert the HTML file to an image
+innings2_img_file <- "innings2_card.png"
+webshot(innings2_html, file = innings2_img_file, selector = "table", zoom = 1.0)
+
+# Read the image with magick
+bowling_innings2_img <- image_read(innings2_img_file)
 
 
 
@@ -296,8 +383,8 @@ run_rate <- bbb %>%
   theme_minimal() +
   theme_minimal() +
   theme(
-    panel.background = element_rect(fill = "#1f4357", color = NA),
-    plot.background = element_rect(fill = "#1f4357", color = NA),
+    panel.background = element_rect(fill = "#1b2326", color = NA),
+    plot.background = element_rect(fill = "#1b2326", color = NA),
     panel.grid.major.x = element_blank(),  # Remove major vertical gridlines
     panel.grid.minor.x = element_blank(),  # Remove minor vertical gridlines
     panel.grid.major.y = element_line(color = "white"),  # Keep horizontal gridlines
@@ -311,3 +398,8 @@ gg_grob_runrate <- ggplotGrob(run_rate)
 gg_image_runrate <- image_graph(width = 730, height = 400, res = 98)
 grid::grid.draw(gg_grob_runrate)
 dev.off()
+
+
+#Out 5. Winner Text
+match1 <- unlist(match)
+match_winner_text <- if_else(is.na(match1["winner_runs"]), paste0(match1["winner"], " won by ", match1["winner_wickets"], " wickets"), paste0(match1["winner"], " won by ", match1["winner_runs"], " runs"))

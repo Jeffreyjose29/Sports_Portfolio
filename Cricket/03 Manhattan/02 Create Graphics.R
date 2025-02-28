@@ -15,13 +15,6 @@ invisible(lapply(packages, library, character.only = TRUE))
 # Create canvas
 final_image <- image_blank(width = 2000, height = 1500, color = "#1b2326")
 
-# Run Rate Chart
-final_image <- image_annotate(final_image, "RUN RATE", gravity = "north", weight = 200, size = 30, 
-                              color = "#FFFFFF", location = "-900+470")
-final_image <- image_composite(final_image, gg_image_runrate, gravity = "north", offset = "+0+500")
-
-
-
 # Add Competition Logo
 final_image <- image_composite(final_image, comp_logo, gravity = "north", offset = "+0+20")
 
@@ -55,5 +48,14 @@ final_image <- image_annotate(final_image, innings_1_over, gravity = "north", we
                               color = "#FFFFFF", location = "-300+390")
 final_image <- image_annotate(final_image, innings_2_over, gravity = "north", weight = 700, size = 30, 
                               color = "#FFFFFF", location = "+300+390")
+
+
+# Manhattan
+final_image <- image_annotate(final_image, paste0("Manhattan: ", match$team1), gravity = "north", weight = 200, size = 25, 
+                              color = "#FFFFFF", location = "-0+470")
+final_image <- image_composite(final_image, gg_image_manhattan_innings1, gravity = "north", offset = "-0+500")
+final_image <- image_annotate(final_image, paste0("Manhattan: ", match$team2), gravity = "north", weight = 200, size = 25, 
+                              color = "#FFFFFF", location = "-0+1070")
+final_image <- image_composite(final_image, gg_image_manhattan_innings2, gravity = "north", offset = "+0+1100")
 
 final_image

@@ -13,7 +13,7 @@ invisible(lapply(packages, library, character.only = TRUE))
 
 
 # Create canvas
-final_image <- image_blank(width = 2230, height = 1500, color = "#1f4357")
+final_image <- image_blank(width = 2230, height = 1500, color = "#1b2326")
 
 # Add Competition Logo
 final_image <- image_composite(final_image, comp_logo, gravity = "north", offset = "+0+20")
@@ -46,6 +46,10 @@ final_image <- image_composite(final_image, innings_1_logo, gravity = "north", o
 final_image <- image_composite(final_image, innings_2_logo, gravity = "north", offset = "+375+290")
 
 
+# Winner Text
+final_image <- image_annotate(final_image, match_winner_text, gravity = "north", weight = 300, size = 30, 
+                              color = "#FFFFFF", location = "+0+480")
+
 # Add Manhattan
 final_image <- image_annotate(final_image, "Manhattan", gravity = "north", weight = 200, size = 20, 
                               color = "#FFFFFF", location = "-750+1050")
@@ -65,8 +69,13 @@ final_image <- image_composite(final_image, gg_image_runrate, gravity = "west", 
 
 
 # Batting Card
-final_image <- image_composite(final_image, innings1_img, gravity = "north", offset = "-300+530")
-final_image <- image_composite(final_image, innings2_img, gravity = "north", offset = "+300+530")
+final_image <- image_composite(final_image, innings1_img, gravity = "north", offset = "-300+560")
+final_image <- image_composite(final_image, innings2_img, gravity = "north", offset = "+300+560")
+
+
+# Bowling Card
+final_image <- image_composite(final_image, bowling_innings1_img, gravity = "north", offset = "-800+560")
+final_image <- image_composite(final_image, bowling_innings2_img, gravity = "north", offset = "+800+560")
 
 final_image
 
