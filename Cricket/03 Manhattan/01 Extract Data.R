@@ -22,19 +22,19 @@ comp_logo <- image_read(
 team_logo_file_locations <- "C:/Users/jeffr/OneDrive/Desktop/Github Activities/Sports_Portfolio/Cricket/Logos/Intl/"
 
 innings_1_logo <- image_read(
-  paste0(team_logo_file_locations, "Pakistan.png")) %>%
+  paste0(team_logo_file_locations, "England.png")) %>%
   image_resize("150x150")
 
 innings_2_logo <- image_read(
-  paste0(team_logo_file_locations, "India.png")) %>%
+  paste0(team_logo_file_locations, "Australia.png")) %>%
   image_resize("150x150")
 
-innings_1_colour <- "#c1f887"
-innings_2_colour <- "#4686cf"
+innings_1_colour <- "#029ac3"
+innings_2_colour <- "#fff32b"
 
 #############################################################
 
-match_id_ <- "1466418"
+match_id_ <- "1466417"
 
 # 1. Get the match high-level information
 match <- fetch_cricsheet(type = "match", gender = "male", competition = "odis") 
@@ -188,6 +188,3 @@ gg_grob_manhattan <- ggplotGrob(innings2_manhatten)
 gg_image_manhattan_innings2 <- image_graph(width = 1900, height = 400, res = 98)
 grid::grid.draw(gg_grob_manhattan)
 dev.off()
-
-
-
