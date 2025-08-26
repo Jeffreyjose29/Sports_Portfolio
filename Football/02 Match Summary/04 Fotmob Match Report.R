@@ -13,11 +13,11 @@ invisible(lapply(packages, library, character.only = TRUE))
 
 
 ## 1. Get match request API 
-match_id <- "4506301"
-request_id <- GET(paste0("https://www.fotmob.com/api/matchDetails?matchId=", match_id))
+match_id <- "4813392"
+request_id <- GET(paste0("https://www.fotmob.com/api/data/matchDetails?matchId=", match_id))
 
-content <- fromJSON(rawToChar(request_id$content))
-
+#content <- fromJSON(rawToChar(request_id$content))
+content <- fromJSON("C:/Users/jeffr/Downloads/match_json.json", flatten = TRUE)
 
 # 2. Format the file
 
@@ -234,7 +234,7 @@ canvas_colour <- "#282828"
 main_text_colour <- "#FFFFFF"
 tertiary_colour <- "#C6C6C3"
 
-soccer_ball_logo <- image_read("https://static.vecteezy.com/system/resources/previews/015/276/951/original/soccer-ball-illustration-icon-sport-element-free-png.png")
+soccer_ball_logo <- image_read("https://png.pngtree.com/png-clipart/20221223/ourmid/pngtree-cartoon-soccer-ball-png-image_6534170.png")
 soccer_ball_logo <- image_scale(soccer_ball_logo, "40x40")
 
 red_card_logo <- image_read("https://i.ibb.co/J2XzYyc/imageedit-1-8329203682.png")
@@ -664,10 +664,10 @@ if(nrow(all_shots) > 0){
 #Top Players
 if(nrow(home_team_top_players) > 0){
   home_top_players <- home_team_top_players %>%
-    select(name, positionLabel, playerRating, manOfTheMatch)
+    select(name.fullName, positionLabel.label, playerRating, manOfTheMatch)
   
-  home_top_players$name$firstName <- NULL
-  home_top_players$name$lastName <- NULL
+  home_top_players$name$name.firstName <- NULL
+  home_top_players$name$name.lastName <- NULL
   
   home_top_players$manOfTheMatch <- if_else(home_top_players$manOfTheMatch == TRUE, 
                                             '<img src="https://png.pngtree.com/png-clipart/20221231/original/pngtree-golden-soccer-ball-png-image_8836180.png" height="30"/>', 
@@ -693,10 +693,10 @@ if(nrow(home_team_top_players) > 0){
 
 if(nrow(away_team_top_players) > 0){
   away_team_top_players <- away_team_top_players %>%
-    select(name, positionLabel, playerRating, manOfTheMatch)
+    select(name.fullName, positionLabel.label, playerRating, manOfTheMatch)
   
-  away_team_top_players$name$firstName <- NULL
-  away_team_top_players$name$lastName <- NULL
+  away_team_top_players$name$name.firstName <- NULL
+  away_team_top_players$name$name.lastName <- NULL
   
   away_team_top_players$manOfTheMatch <- if_else(away_team_top_players$manOfTheMatch == TRUE, 
                                                  '<img src="https://png.pngtree.com/png-clipart/20221231/original/pngtree-golden-soccer-ball-png-image_8836180.png" height="30"/>', 
@@ -744,9 +744,9 @@ if(nrow(all_shots) > 0){
   
   xg <- xg %>%
     group_by(teamId) %>%
-    complete(full_minutes = 0:max_minute) %>%
-    fill(cumsum_xg, .direction = "down") %>%
-    replace_na(list(cumsum_xg = 0)) %>%
+    tidyr::complete(full_minutes = 0:max_minute) %>%
+    tidyr::fill(cumsum_xg, .direction = "down") %>%
+    mutate(cumsum_xg = tidyr::replace_na(cumsum_xg, 0)) %>%
     mutate(team_colour = if_else(teamId == home_team_id, home_team_colours, away_team_colours))
   
   xg_plotting <- xg %>%
